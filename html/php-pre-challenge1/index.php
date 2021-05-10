@@ -9,6 +9,7 @@ for ($i = 1; $i <= 100; $i++) {
         echo '5の倍数';
     } else {
         echo $i;
-    } echo '<br>';
+    } 
+    echo '<br>';
 }
-?>
+
