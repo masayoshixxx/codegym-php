@@ -4,6 +4,8 @@ $array = explode(',', $_GET['array']);
 // 修正はここから
 $length = count($array);
 
+$cnt = 0;
+
 for ($i = 0; $i < $length - 1; $i++) {
   for ($j = 1; $j < $length - $i; $j++) {
     $cnt++;
