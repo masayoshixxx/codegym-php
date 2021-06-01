@@ -207,64 +207,33 @@ function makeLink($value)
             <?php foreach ($posts as $i => $post) : ?>
 
             <?php
+            // よく使う分岐の簡略化
+            $targetId = (int)$post['retweet_post_id'] === 0 ? $post['id'] : $post['retweet_post_id'] ;
+            
             // リツイート先の情報を書き換える
             $rt_changes = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND p.id=?');
             $rt_changes->execute(array($post['retweet_post_id']));
             $rt_change = $rt_changes->fetch();
 
 
-            // いいね数を記録する
-
             // いいねの情報を取得する
             $fav_id = $db->prepare('SELECT * FROM favorites WHERE member_id=? AND post_id=?');
-            // リツイート元について
-            if ((int) $post['retweet_post_id'] === 0) {
-                $fav_id->execute(array($_SESSION['id'], $post['id']));
-            // リツイート先について
-            } else {
-                $fav_id->execute(array($_SESSION['id'], $post['retweet_post_id']));
-            }
+            $fav_id->execute(array($_SESSION['id'], $targetId));
             $favorite = $fav_id->fetch();
 
+            // いいねの数を記録する
             $favcounts = $db->prepare('SELECT COUNT(post_id) as cnt FROM favorites WHERE post_id=?');
-            // リツイート元のカウント
-            if ((int) $post['retweet_post_id'] === 0) {
-                $favcounts->execute(array($post['id']));
-            // リツイート先のカウント
-            } else {
-                $favcounts->execute(array($post['retweet_post_id']));
-            }
+            $favcounts->execute(array($targetId));
             $favcount = $favcounts->fetch();
-
-
-            // リツイート数を記録する
 
             // リツイートの情報を取得する
             $rt_id = $db->prepare('SELECT retweet_post_id FROM posts WHERE member_id=? AND retweet_post_id=?');
-
-            if ((int)$post['retweet_post_id'] === 0) {
-                // リツイートされていないpostの場合
-                $rt_id->execute(array(
-                    $_SESSION['id'],
-                    $post['id']
-                ));
-            } else {
-                // リツイートされているpostの場合
-                $rt_id->execute(array(
-                    $_SESSION['id'],
-                    $post['retweet_post_id']
-                ));
-            }
+            $rt_id->execute(array($_SESSION['id'], $targetId));
             $retweet_id = $rt_id->fetch();
 
+            // リツイートの数を記録する
             $retweetcounts = $db->prepare('SELECT COUNT(retweet_post_id) AS cnt FROM posts WHERE retweet_post_id=?');
-            // リツイート元のカウント
-            if ((int)$post['retweet_post_id'] === 0) {
-                $retweetcounts->execute(array($post['id']));
-            // リツイート先のカウント
-            } else {
-                $retweetcounts->execute(array($post['retweet_post_id']));
-            }
+            $retweetcounts->execute(array($targetId));
             $retweetcount = $retweetcounts->fetch();
             ?>
 
@@ -314,7 +283,7 @@ function makeLink($value)
                         <?php endif; ?>
                         </form>
 
-                        <a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo " " . h($post['created']); ?></a>
+                        <a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
                         <?php
                         if ($post['reply_post_id'] > 0) :
                         ?><a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">
