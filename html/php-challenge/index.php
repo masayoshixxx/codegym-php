@@ -215,7 +215,6 @@ function makeLink($value)
             $rt_changes->execute(array($post['retweet_post_id']));
             $rt_change = $rt_changes->fetch();
 
-
             // いいねの情報を取得する
             $fav_id = $db->prepare('SELECT * FROM favorites WHERE member_id=? AND post_id=?');
             $fav_id->execute(array($_SESSION['id'], $targetId));
@@ -246,7 +245,6 @@ function makeLink($value)
                         <img src="member_picture/<?php echo h($rt_change['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
                         <p><?php echo makeLink(h($rt_change['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>
                     <?php endif; ?>
-
                     [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 
                     <p class="day">
@@ -284,20 +282,14 @@ function makeLink($value)
                         </form>
 
                         <a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
-                        <?php
-                        if ($post['reply_post_id'] > 0) :
-                        ?><a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">
-                                返信元のメッセージ</a>
-                        <?php
-                        endif;
-                        ?>
-                        <?php
-                        if ($_SESSION['id'] == $post['member_id']) :
-                        ?>
+
+                        <?php if ($post['reply_post_id'] > 0) :?>
+                            <a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a>
+                        <?php endif; ?>
+
+                        <?php if ($_SESSION['id'] == $post['member_id']) :?>
                             [<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color: #F33;">削除</a>]
-                        <?php
-                        endif;
-                        ?>
+                        <?php endif; ?>
                     </p>
                 </div>
             <?php endforeach; ?>
