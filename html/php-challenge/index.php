@@ -65,7 +65,7 @@ if (isset($_POST['fav'])) {
 
 // いいねを削除する
 } elseif (isset($_POST['fav_not'])) {
-    $fav_not_posts = $db->prepare('SELECT * FROM posts p WHERE p.id=?');
+    $fav_not_posts = $db->prepare('SELECT * FROM posts WHERE id=?');
     $fav_not_posts->execute(array($_POST['fav_not']));
     $fav_not_post = $fav_not_posts->fetch();
     $del = $db->prepare('DELETE FROM favorites WHERE member_id=? AND post_id=?');
@@ -90,7 +90,7 @@ if (isset($_POST['fav'])) {
 // リツイートを投稿する
 if (isset($_POST['rt'])) {
     $id = $_POST['rt'];
-    $rt_posts = $db->prepare('SELECT * FROM posts p WHERE p.id=?');
+    $rt_posts = $db->prepare('SELECT * FROM posts WHERE id=?');
     $rt_posts->execute(array($id));
     $rt_post = $rt_posts->fetch();
     $retweet = $db->prepare('INSERT INTO posts SET member_id=?, message=?, retweet_post_id=?, created=NOW()');
@@ -105,7 +105,7 @@ if (isset($_POST['rt'])) {
         $retweet->execute(array(
             $_SESSION['id'],
             $rt_post['message'],
-            $rt_posts['retweet_post_id']
+            $rt_post['retweet_post_id']
         ));
     }
     header('Location: index.php');
@@ -113,9 +113,10 @@ if (isset($_POST['rt'])) {
 
 // リツイートを削除する
 } elseif (isset($_POST['rt_not'])) {
-    $rt_not_posts = $db->prepare('SELECT * FROM posts p WHERE p.id=?');
+    $rt_not_posts = $db->prepare('SELECT * FROM posts WHERE id=?');
     $rt_not_posts->execute(array($_POST['rt_not']));
     $rt_not_post = $rt_not_posts->fetch();
+
     $del = $db->prepare('DELETE FROM posts WHERE member_id=? AND retweet_post_id=?');
 
     if((int) $rt_not_post['retweet_post_id'] === 0) {
@@ -126,7 +127,7 @@ if (isset($_POST['rt'])) {
     } else {
         $del->execute(array(
             $_SESSION['id'],
-            $rt_not_post['etweet_post_id']
+            $rt_not_post['retweet_post_id']
         ));
     }
     header('Location: index.php');
@@ -234,9 +235,28 @@ function makeLink($value)
                 $favcounts->execute(array($post['retweet_post_id']));
             }
             $favcount = $favcounts->fetch();
-            
+
 
             // リツイート数を記録する
+
+            // リツイートの情報を取得する
+            $rt_id = $db->prepare('SELECT retweet_post_id FROM posts WHERE member_id=? AND retweet_post_id=?');
+
+            if ((int)$post['retweet_post_id'] === 0) {
+                // リツイートされていないpostの場合
+                $rt_id->execute(array(
+                    $_SESSION['id'],
+                    $post['id']
+                ));
+            } else {
+                // リツイートされているpostの場合
+                $rt_id->execute(array(
+                    $_SESSION['id'],
+                    $post['retweet_post_id']
+                ));
+            }
+            $retweet_id = $rt_id->fetch();
+
             $retweetcounts = $db->prepare('SELECT COUNT(retweet_post_id) AS cnt FROM posts WHERE retweet_post_id=?');
             // リツイート元のカウント
             if ((int)$post['retweet_post_id'] === 0) {
@@ -264,31 +284,32 @@ function makeLink($value)
                         <!-- 課題：リツイートといいね機能の実装 -->
 
                         <!-- リツイート機能 -->
-
                         <form class="retweet" action="index.php" name="form_rt" method="post">
-                        <?php if ((int)$retweetcount['cnt'] === 0) : ?>
-                            <input type="hidden" name="rt" value="<?php echo h($post['id']); ?>">
-                            <a href="javascript:form_rt[<?php echo $i; ?>].submit()">                        
-                                <img class="retweet-image" src="images/retweet-solid-gray.svg"><span style="color:gray;"><?php echo h($retweetcount['cnt']); ?></span>
-                            </a>
-                        <?php else : ?>
+
+                        <?php if ((int)$retweet_id['retweet_post_id'] !== 0) : ?>
                             <input type="hidden" name="rt_not" value="<?php echo h($post['id']); ?>">
                             <a href="javascript:form_rt[<?php echo $i; ?>].submit()">                                                       
                                 <img class="retweet-image" src="images/retweet-solid-blue.svg"><span style="color:blue;"><?php echo h($retweetcount['cnt']) ?></span>
+                            </a>
+                        <?php else : ?>
+                            <input type="hidden" name="rt" value="<?php echo h($post['id']); ?>">
+                            <a href="javascript:form_rt[<?php echo $i; ?>].submit()">                        
+                                <img class="retweet-image" src="images/retweet-solid-gray.svg"><span style="color:gray;"><?php echo h($retweetcount['cnt']); ?></span>
                             </a>
                         <?php endif; ?>
                         </form>
 
                         <!-- いいね機能 -->
                         <form class="favorite" action="index.php" name="form_fav" method="post">
-                        <?php if ((int)$favcount['cnt'] === 0) : ?>
-                            <input type="hidden" name="fav" value="<?php echo h($post['id']); ?>">
-                            <a href="javascript:form_fav[<?php echo $i; ?>].submit()">                        
-                                <img class="favorite-image" src="images/heart-solid-gray.svg"><span style="color:gray;"><?php echo h($favcount['cnt']); ?></span>
-                        <?php else : ?>
+                        <?php if ((int)$favorite['post_id'] !== 0) : ?>
                             <input type="hidden" name="fav_not" value="<?php echo h($post['id']); ?>">
                             <a href="javascript:form_fav[<?php echo $i; ?>].submit()">                                                       
                                 <img class="favorite-image" src="images/heart-solid-red.svg"><span style="color:red;"><?php echo h($favcount['cnt']); ?></span>
+                            </a>
+                        <?php else : ?>
+                            <input type="hidden" name="fav" value="<?php echo h($post['id']); ?>">
+                            <a href="javascript:form_fav[<?php echo $i; ?>].submit()">                        
+                                <img class="favorite-image" src="images/heart-solid-gray.svg"><span style="color:gray;"><?php echo h($favcount['cnt']); ?></span>
                             </a>
                         <?php endif; ?>
                         </form>
