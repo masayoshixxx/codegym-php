@@ -117,18 +117,25 @@ if (isset($_POST['rt'])) {
     $rt_not_posts->execute(array($_POST['rt_not']));
     $rt_not_post = $rt_not_posts->fetch();
 
-    $del = $db->prepare('DELETE FROM posts WHERE member_id=? AND retweet_post_id=?');
-
-    if((int) $rt_not_post['retweet_post_id'] === 0) {
+    if ((int)$post['retweet_post_id'] !== 0 && (int)$_SESSION['id'] === (int)$post['member_id']) {
+        $del = $db->prepare('DELETE FROM posts WHERE id=?');
         $del->execute(array(
-            $_SESSION['id'],
             $rt_not_post['id']
         ));
     } else {
-        $del->execute(array(
-            $_SESSION['id'],
-            $rt_not_post['retweet_post_id']
-        ));
+        $del = $db->prepare('DELETE FROM posts WHERE member_id=? AND retweet_post_id=?');
+
+        if((int) $rt_not_post['retweet_post_id'] === 0) {
+            $del->execute(array(
+                $_SESSION['id'],
+                $rt_not_post['id']
+            ));
+        } else {
+            $del->execute(array(
+                $_SESSION['id'],
+                $rt_not_post['retweet_post_id']
+            ));
+        }
     }
     header('Location: index.php');
     exit();
@@ -242,8 +249,8 @@ function makeLink($value)
                         <p><?php echo makeLink(h($post['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>             　　　　
                     <?php else : ?>
                         <?php echo $post['name'] . 'さんがリツイートしました。' . '<br>'; ?>
-                        <img src="member_picture/<?php echo h($rt_change['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
-                        <p><?php echo makeLink(h($rt_change['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>
+                        <img src="member_picture/<?php echo h($rt_change['picture']); ?>" width="48" height="48" alt="<?php echo h($rt_change['name']); ?>" />
+                        <p><?php echo makeLink(h($rt_change['message'])); ?><span class="name">（<?php echo h($rt_change['name']); ?>）</span>
                     <?php endif; ?>
                     [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 
@@ -259,7 +266,7 @@ function makeLink($value)
                                 <img class="retweet-image" src="images/retweet-solid-blue.svg"><span style="color:blue;"><?php echo h($retweetcount['cnt']) ?></span>
                             </a>
                         <?php else : ?>
-                            <input type="hidden" name="rt" value="<?php echo h($post['id']); ?>">
+                            <input type="hidden" name="rt" value="<?php echo h($targetId); ?>">
                             <a href="javascript:form_rt[<?php echo $i; ?>].submit()">                        
                                 <img class="retweet-image" src="images/retweet-solid-gray.svg"><span style="color:gray;"><?php echo h($retweetcount['cnt']); ?></span>
                             </a>
@@ -287,7 +294,7 @@ function makeLink($value)
                             <a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a>
                         <?php endif; ?>
 
-                        <?php if ($_SESSION['id'] == $post['member_id']) :?>
+                        <?php if ($_SESSION['id'] === $post['member_id']) :?>
                             [<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color: #F33;">削除</a>]
                         <?php endif; ?>
                     </p>
