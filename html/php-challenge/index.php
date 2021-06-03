@@ -215,7 +215,7 @@ function makeLink($value)
 
             <?php
             // よく使う分岐の簡略化
-            $targetId = (int)$post['retweet_post_id'] === 0 ? $post['id'] : $post['retweet_post_id'] ;
+            $target_id = (int)$post['retweet_post_id'] === 0 ? $post['id'] : $post['retweet_post_id'] ;
             
             // リツイート先の情報を書き換える
             $rt_changes = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND p.id=?');
@@ -224,22 +224,22 @@ function makeLink($value)
 
             // いいねの情報を取得する
             $fav_id = $db->prepare('SELECT * FROM favorites WHERE member_id=? AND post_id=?');
-            $fav_id->execute(array($_SESSION['id'], $targetId));
+            $fav_id->execute(array($_SESSION['id'], $target_id));
             $favorite = $fav_id->fetch();
 
             // いいねの数を記録する
             $favcounts = $db->prepare('SELECT COUNT(post_id) as cnt FROM favorites WHERE post_id=?');
-            $favcounts->execute(array($targetId));
+            $favcounts->execute(array($target_id));
             $favcount = $favcounts->fetch();
 
             // リツイートの情報を取得する
             $rt_id = $db->prepare('SELECT retweet_post_id FROM posts WHERE member_id=? AND retweet_post_id=?');
-            $rt_id->execute(array($_SESSION['id'], $targetId));
+            $rt_id->execute(array($_SESSION['id'], $target_id));
             $retweet_id = $rt_id->fetch();
 
             // リツイートの数を記録する
             $retweetcounts = $db->prepare('SELECT COUNT(retweet_post_id) AS cnt FROM posts WHERE retweet_post_id=?');
-            $retweetcounts->execute(array($targetId));
+            $retweetcounts->execute(array($target_id));
             $retweetcount = $retweetcounts->fetch();
             ?>
 
@@ -266,7 +266,7 @@ function makeLink($value)
                                 <img class="retweet-image" src="images/retweet-solid-blue.svg"><span style="color:blue;"><?php echo h($retweetcount['cnt']) ?></span>
                             </a>
                         <?php else : ?>
-                            <input type="hidden" name="rt" value="<?php echo h($targetId); ?>">
+                            <input type="hidden" name="rt" value="<?php echo h($target_id); ?>">
                             <a href="javascript:form_rt[<?php echo $i; ?>].submit()">                        
                                 <img class="retweet-image" src="images/retweet-solid-gray.svg"><span style="color:gray;"><?php echo h($retweetcount['cnt']); ?></span>
                             </a>
